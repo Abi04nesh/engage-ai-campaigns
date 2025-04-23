@@ -98,4 +98,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg;
+  }
+  
+  .card-gradient {
+    @apply bg-gradient-to-br from-brand-600 to-brand-800 text-white;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent;
+  }
 }
