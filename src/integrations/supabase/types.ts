@@ -9,7 +9,160 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      campaigns: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          send_at: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          send_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          send_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_events: {
+        Row: {
+          campaign_id: string | null
+          event: string
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          event: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          event?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          name: string | null
+          source: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

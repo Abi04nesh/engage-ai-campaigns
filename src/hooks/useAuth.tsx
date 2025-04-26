@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { AuthUser } from '@/types/api';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
