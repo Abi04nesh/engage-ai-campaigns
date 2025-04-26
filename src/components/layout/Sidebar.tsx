@@ -11,15 +11,12 @@ import {
   Users,
   PieChart,
   List,
-  Activity,
 } from "lucide-react";
 
 type SideNavItem = {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  submenu?: boolean;
-  submenuItems?: SideNavItem[];
 };
 
 const sidebarNavItems: SideNavItem[] = [
@@ -54,11 +51,6 @@ const sidebarNavItems: SideNavItem[] = [
     icon: Calendar,
   },
   {
-    title: "Automations",
-    href: "/automations",
-    icon: Activity,
-  },
-  {
     title: "Inbox",
     href: "/inbox",
     icon: Inbox,
@@ -90,10 +82,13 @@ export function Sidebar() {
               to={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                "transform transition-transform duration-200 hover:scale-105",
+                "animate-in slide-in-from-left-5 duration-300",
                 pathname === item.href
                   ? "bg-sidebar-accent text-primary"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/50"
               )}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               <item.icon className="h-4 w-4" />
               <span>{item.title}</span>

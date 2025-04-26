@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImportSubscribers } from "@/components/subscribers/ImportSubscribers";
 
 type Subscriber = {
   id: string;
@@ -154,14 +154,7 @@ export default function Subscribers() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-1">
-            <Upload className="h-4 w-4" />
-            <span>Import</span>
-          </Button>
-          <Button variant="outline" className="gap-1">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </Button>
+          <ImportSubscribers />
           <Button className="gap-1">
             <Plus className="h-4 w-4" />
             <span>Add Subscriber</span>
