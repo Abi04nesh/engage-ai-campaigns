@@ -7,57 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  AlertCircle,
-  ArrowUpDown,
-  Check,
-  Download,
-  Edit,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Trash,
-  Upload,
-  Users,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Plus } from "lucide-react";
 import { ImportSubscribers } from "@/components/subscribers/ImportSubscribers";
+import { SubscriberStats } from "@/components/subscribers/SubscriberStats";
+import { SubscriberFilters } from "@/components/subscribers/SubscriberFilters";
+import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
 
-type Subscriber = {
-  id: string;
-  email: string;
-  name: string;
-  status: "active" | "unsubscribed" | "bounced" | "new";
-  source: string;
-  joinedAt: string;
-  lastActivity?: string;
-};
-
-const fakeSubscribers: Subscriber[] = [
+const fakeSubscribers = [
   {
     id: "1",
     email: "john.doe@example.com",
@@ -122,17 +78,10 @@ const fakeSubscribers: Subscriber[] = [
   },
 ];
 
-const statusColors = {
-  active: "text-success-700 bg-success-100",
-  unsubscribed: "text-warning-700 bg-warning-100",
-  bounced: "text-danger-700 bg-danger-100",
-  new: "text-brand-800 bg-brand-100",
-};
-
 export default function Subscribers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [subscribers, setSubscribers] = useState<Subscriber[]>(fakeSubscribers);
+  const [subscribers] = useState(fakeSubscribers);
 
   // Filter subscribers based on search term and status
   const filteredSubscribers = subscribers.filter((subscriber) => {
@@ -162,35 +111,7 @@ export default function Subscribers() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">14,526</div>
-            <p className="text-xs text-muted-foreground">Across all lists</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">New Subscribers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+267</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Unsubscribe Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0.8%</div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
-          </CardContent>
-        </Card>
-      </div>
+      <SubscriberStats />
 
       <Card>
         <CardHeader>
@@ -201,119 +122,16 @@ export default function Subscribers() {
                 View and manage your subscribers
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search subscribers..."
-                  className="pl-8 w-64"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select
-                value={selectedStatus}
-                onValueChange={setSelectedStatus}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
-                  <SelectItem value="bounced">Bounced</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <SubscriberFilters
+              searchTerm={searchTerm}
+              selectedStatus={selectedStatus}
+              onSearchChange={setSearchTerm}
+              onStatusChange={setSelectedStatus}
+            />
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[250px]">Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubscribers.length > 0 ? (
-                filteredSubscribers.map((subscriber) => (
-                  <TableRow key={subscriber.id}>
-                    <TableCell className="font-medium">
-                      {subscriber.email}
-                    </TableCell>
-                    <TableCell>{subscriber.name || "-"}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={statusColors[subscriber.status]}
-                      >
-                        {subscriber.status.charAt(0).toUpperCase() +
-                          subscriber.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{subscriber.source}</TableCell>
-                    <TableCell>
-                      {new Date(subscriber.joinedAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Check className="mr-2 h-4 w-4" />
-                            {subscriber.status === "unsubscribed"
-                              ? "Resubscribe"
-                              : "Unsubscribe"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center"
-                  >
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <Users className="h-8 w-8 mb-2" />
-                      <p>No subscribers found</p>
-                      <p className="text-sm">
-                        Try adjusting your search or filters
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <SubscribersTable subscribers={filteredSubscribers} />
         </CardContent>
       </Card>
     </div>
