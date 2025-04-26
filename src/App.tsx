@@ -10,6 +10,10 @@ import Subscribers from "./pages/Subscribers";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import Templates from "./pages/Templates";
+import Analytics from "./pages/Analytics";
+import Calendar from "./pages/Calendar";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -60,8 +64,34 @@ const App = () => (
               </Layout>
             </ProtectedRoute>
           } />
-          
-          {/* Add future protected routes following the same pattern */}
+          <Route path="/templates" element={
+            <ProtectedRoute>
+              <Layout>
+                <Templates />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <Layout>
+                <Analytics />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/calendar" element={
+            <ProtectedRoute>
+              <Layout>
+                <Calendar />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          } />
           
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />

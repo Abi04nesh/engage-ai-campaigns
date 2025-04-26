@@ -5,12 +5,11 @@ import { cn } from "@/lib/utils";
 import {
   BarChart,
   Calendar,
-  Inbox,
-  Mail,
   Settings,
-  Users,
-  PieChart,
   List,
+  PieChart,
+  Mail,
+  Users,
 } from "lucide-react";
 
 type SideNavItem = {
@@ -36,24 +35,19 @@ const sidebarNavItems: SideNavItem[] = [
     icon: Users,
   },
   {
-    title: "Analytics",
-    href: "/analytics",
-    icon: PieChart,
-  },
-  {
     title: "Templates",
     href: "/templates",
     icon: List,
   },
   {
+    title: "Analytics",
+    href: "/analytics",
+    icon: PieChart,
+  },
+  {
     title: "Calendar",
     href: "/calendar",
     icon: Calendar,
-  },
-  {
-    title: "Inbox",
-    href: "/inbox",
-    icon: Inbox,
   },
   {
     title: "Settings",
