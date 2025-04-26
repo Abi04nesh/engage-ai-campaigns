@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +14,18 @@ import { SubscriberStats } from "@/components/subscribers/SubscriberStats";
 import { SubscriberFilters } from "@/components/subscribers/SubscriberFilters";
 import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
 
-const fakeSubscribers = [
+// Define the Subscriber type to match what's expected in SubscribersTable
+interface Subscriber {
+  id: string;
+  email: string;
+  name: string;
+  status: "active" | "unsubscribed" | "bounced" | "new";
+  source: string;
+  joinedAt: string;
+  lastActivity?: string;
+}
+
+const fakeSubscribers: Subscriber[] = [
   {
     id: "1",
     email: "john.doe@example.com",
@@ -81,7 +93,7 @@ const fakeSubscribers = [
 export default function Subscribers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [subscribers] = useState(fakeSubscribers);
+  const [subscribers] = useState<Subscriber[]>(fakeSubscribers);
 
   // Filter subscribers based on search term and status
   const filteredSubscribers = subscribers.filter((subscriber) => {
