@@ -12,26 +12,7 @@ export const useAuth = () => {
 
   // Load session from Supabase on initial render
   useEffect(() => {
-    const loadSession = async () => {
-      setIsLoading(true);
-      
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const authUser: AuthUser = {
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata.name || '',
-          createdAt: new Date(session.user.created_at || '').toISOString()
-        };
-        setUser(authUser);
-      }
-      
-      setIsLoading(false);
-    };
-    
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session?.user) {
@@ -45,10 +26,26 @@ export const useAuth = () => {
         } else {
           setUser(null);
         }
+        setIsLoading(false);
       }
     );
     
-    loadSession();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata.name || '',
+          createdAt: new Date(session.user.created_at || '').toISOString()
+        };
+        setUser(authUser);
+      }
+      setIsLoading(false);
+    }).catch(err => {
+      console.error("Error getting session:", err);
+      setIsLoading(false);
+    });
     
     // Clean up subscription on unmount
     return () => {
@@ -127,7 +124,7 @@ export const useAuth = () => {
         
         toast({
           title: "Account Created",
-          description: "Your account has been created successfully.",
+          description: data.session ? "Your account has been created and you are now logged in." : "Your account has been created. Please check your email for verification.",
         });
         return true;
       }
@@ -148,12 +145,23 @@ export const useAuth = () => {
   }, [toast]);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out successfully.",
-    });
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out successfully.",
+      });
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Logout failed';
+      toast({
+        title: "Logout Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return false;
+    }
   }, [toast]);
 
   return {
