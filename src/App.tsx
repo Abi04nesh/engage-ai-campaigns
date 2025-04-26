@@ -16,6 +16,7 @@ import Templates from "./pages/Templates";
 import Analytics from "./pages/Analytics";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
+import ResetPassword from "./pages/ResetPassword";
 import { useAuth } from "./hooks/useAuth";
 import { createContext, useContext } from "react";
 import { AuthUser } from "./types/api";
@@ -29,7 +30,9 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
+  resendVerificationEmail: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -81,6 +84,7 @@ const App = () => (
               {/* Auth routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected app routes */}
               <Route path="/" element={

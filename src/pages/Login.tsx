@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -12,22 +13,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail } from "lucide-react";
+import { Mail, KeyRound } from "lucide-react";
 import { useAuthContext } from "@/App";
 import { Helmet } from "react-helmet-async";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoading } = useAuthContext();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const { login, isLoading, resendVerificationEmail } = useAuthContext();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
+    setNeedsVerification(false);
     
     const success = await login(email, password);
     if (success) {
       navigate("/");
+    } else {
+      // Check if we need to show verification option (this will be caught in useAuth and handled)
+      const authError = document.querySelector('.destructive') as HTMLElement;
+      if (authError && authError.textContent?.includes('Email not confirmed')) {
+        setNeedsVerification(true);
+      }
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (email) {
+      await resendVerificationEmail(email);
+    } else {
+      setErrorMessage("Please enter your email address");
     }
   };
 
@@ -50,6 +69,32 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {needsVerification && (
+              <Alert className="mb-4 bg-amber-50 border-amber-200">
+                <AlertDescription className="text-amber-800">
+                  <div className="flex flex-col gap-2">
+                    <p>Your email is not yet verified. Please check your inbox for the verification email.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2 border-amber-300 text-amber-800 hover:bg-amber-100"
+                      onClick={handleResendVerification}
+                      disabled={isLoading}
+                    >
+                      Resend Verification Email
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {errorMessage && (
+              <Alert className="mb-4 bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">
+                  {errorMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="space-y-2">

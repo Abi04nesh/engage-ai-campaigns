@@ -15,6 +15,7 @@ export const useAuth = () => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        console.log("Auth state changed:", _event, session);
         if (session?.user) {
           const authUser: AuthUser = {
             id: session.user.id,
@@ -32,6 +33,7 @@ export const useAuth = () => {
     
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Got existing session:", session);
       if (session?.user) {
         const authUser: AuthUser = {
           id: session.user.id,
@@ -63,7 +65,32 @@ export const useAuth = () => {
         password
       });
       
-      if (authError) throw authError;
+      if (authError) {
+        // Handle specific error for unconfirmed email
+        if (authError.message.includes('Email not confirmed')) {
+          toast({
+            title: "Email Not Confirmed",
+            description: "Please check your email and click the confirmation link before logging in.",
+            variant: "destructive",
+          });
+          
+          // Offer to resend the confirmation email
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: email
+          });
+          
+          if (!resendError) {
+            toast({
+              title: "Verification Email Resent",
+              description: "We've resent the verification email. Please check your inbox.",
+            });
+          }
+        } else {
+          throw authError;
+        }
+        return false;
+      }
       
       if (data.user) {
         const authUser: AuthUser = {
@@ -113,19 +140,24 @@ export const useAuth = () => {
       if (authError) throw authError;
       
       if (data.user) {
-        const authUser: AuthUser = {
-          id: data.user.id,
-          email: data.user.email || '',
-          name: name,
-          createdAt: new Date(data.user.created_at || '').toISOString()
-        };
-        
-        setUser(authUser);
-        
+        // Show verification email sent message
         toast({
-          title: "Account Created",
-          description: data.session ? "Your account has been created and you are now logged in." : "Your account has been created. Please check your email for verification.",
+          title: "Signup Successful",
+          description: "Please check your email to verify your account before logging in.",
         });
+        
+        // Don't log the user in automatically if email verification is required
+        if (data.session) {
+          const authUser: AuthUser = {
+            id: data.user.id,
+            email: data.user.email || '',
+            name: name,
+            createdAt: new Date(data.user.created_at || '').toISOString()
+          };
+          
+          setUser(authUser);
+        }
+        
         return true;
       }
       
@@ -164,6 +196,69 @@ export const useAuth = () => {
     }
   }, [toast]);
 
+  // Handle password reset functionality
+  const resetPassword = useCallback(async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/update-password',
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Reset Email Sent",
+        description: "Check your email for the password reset link.",
+      });
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to send reset password email';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  // Function to resend verification email
+  const resendVerificationEmail = useCallback(async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification Email Resent",
+        description: "Please check your inbox for the verification link.",
+      });
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to resend verification email';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
   return {
     user,
     isAuthenticated: !!user,
@@ -171,6 +266,8 @@ export const useAuth = () => {
     error,
     login,
     signup,
-    logout
+    logout,
+    resetPassword,
+    resendVerificationEmail
   };
 };
