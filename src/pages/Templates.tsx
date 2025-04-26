@@ -1,6 +1,8 @@
 
 import React from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
+import { TestEmailSender } from "@/components/email/TestEmailSender";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Templates = () => {
   return (
@@ -12,12 +14,22 @@ const Templates = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Email Templates</h1>
         </div>
-        <div className="grid gap-6">
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="mb-4 text-xl font-semibold">Template Library</h2>
-            <p className="text-muted-foreground">
-              Create and manage your email templates here. Coming soon!
-            </p>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Template Library</CardTitle>
+                <CardDescription>Create and manage your email templates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Create and manage your email templates here. More features coming soon!
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <TestEmailSender />
           </div>
         </div>
       </div>
