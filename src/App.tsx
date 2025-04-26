@@ -16,20 +16,56 @@ import Templates from "./pages/Templates";
 import Analytics from "./pages/Analytics";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
+import { useAuth } from "./hooks/useAuth";
+import { createContext, useContext } from "react";
+import { AuthUser } from "./types/api";
 
 const queryClient = new QueryClient();
 
-// Simple auth check - would use a proper auth system in a real app
-const isAuthenticated = () => {
-  // Hardcoded to true for demo purposes
-  return true;
+// Create auth context
+interface AuthContextType {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Auth provider component
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const auth = useAuth();
+  
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  if (!isAuthenticated()) {
+  const { isAuthenticated, isLoading } = useAuthContext();
+  
+  if (isLoading) {
+    // Show loading spinner while checking authentication
+    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+  
   return <>{children}</>;
 };
 
@@ -39,67 +75,69 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Auth routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            
-            {/* Protected app routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/campaigns" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Campaigns />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/subscribers" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Subscribers />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/templates" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Templates />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/analytics" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Analytics />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/calendar" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Calendar />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Settings />
-                </Layout>
-              </ProtectedRoute>
-            } />
-            
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Auth routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              
+              {/* Protected app routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/campaigns" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Campaigns />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscribers" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Subscribers />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/templates" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Templates />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Analytics />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/calendar" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Calendar />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Settings />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </HelmetProvider>
   </QueryClientProvider>

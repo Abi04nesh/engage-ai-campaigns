@@ -1,10 +1,13 @@
 
 import { useState } from "react";
 import { sendEmail, sendEmailWithNotification } from "@/utils/emailService";
+import { SendEmailRequest, SendEmailResponse } from "@/types/api";
+import { useToast } from "@/components/ui/use-toast";
 
 export const useEmailSender = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const sendEmailAsync = async (
     to: string | string[],
@@ -16,17 +19,22 @@ export const useEmailSender = () => {
     setError(null);
     
     try {
-      const result = await sendEmail({ to, subject, html, from });
+      const request: SendEmailRequest = { to, subject, html, from };
+      const result = await sendEmail(request);
       
       if (!result.success) {
         setError(result.message);
       }
       
-      return result.success;
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
-      return false;
+      
+      return {
+        success: false,
+        message: errorMessage
+      } as SendEmailResponse;
     } finally {
       setIsLoading(false);
     }
@@ -52,6 +60,13 @@ export const useEmailSender = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
+      
+      toast({
+        title: "Email Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
       return false;
     } finally {
       setIsLoading(false);

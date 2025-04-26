@@ -1,37 +1,51 @@
 
 import { toast } from "@/hooks/use-toast";
+import { SendEmailRequest, SendEmailResponse } from "@/types/api";
 
-// This service abstracts the email sending functionality
-// AWS credentials should be stored securely in environment variables on your server
-// The frontend should only make requests to your backend API
+// Base API URL - should be configurable via environment variable in production
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:3001/api';
 
-interface EmailOptions {
-  to: string | string[];
-  subject: string;
-  html: string;
-  from?: string;
-}
-
-export const sendEmail = async (options: EmailOptions): Promise<{ success: boolean; message: string }> => {
+// Generic API request function with error handling
+async function apiRequest<T>(
+  endpoint: string, 
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', 
+  data?: any
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
   try {
-    // In a production environment, this request should go to your secure backend
-    // NEVER include AWS credentials in frontend code
-    
-    const response = await fetch('/api/send-email', {
-      method: 'POST',
+    const response = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
+        // Add authorization header if user is logged in
+        ...(localStorage.getItem('authToken') && {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        })
       },
-      body: JSON.stringify(options),
+      body: data ? JSON.stringify(data) : undefined,
     });
 
-    const data = await response.json();
+    const responseData = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to send email');
+      throw new Error(responseData.message || 'API request failed');
     }
 
-    return { success: true, message: 'Email sent successfully' };
+    return responseData as T;
+  } catch (error) {
+    console.error(`API request error (${method} ${endpoint}):`, error);
+    throw error;
+  }
+}
+
+// Send email using our API
+export const sendEmail = async (options: SendEmailRequest): Promise<SendEmailResponse> => {
+  try {
+    const response = await apiRequest<SendEmailResponse>('/email/send', 'POST', options);
+    return response;
   } catch (error) {
     console.error('Email sending error:', error);
     return { 
@@ -42,7 +56,7 @@ export const sendEmail = async (options: EmailOptions): Promise<{ success: boole
 };
 
 // Helper function to display toast notifications for email operations
-export const sendEmailWithNotification = async (options: EmailOptions): Promise<boolean> => {
+export const sendEmailWithNotification = async (options: SendEmailRequest): Promise<boolean> => {
   const { success, message } = await sendEmail(options);
   
   if (success) {
@@ -59,4 +73,124 @@ export const sendEmailWithNotification = async (options: EmailOptions): Promise<
   }
   
   return success;
+};
+
+// API services for authentication
+export const authService = {
+  login: (email: string, password: string) => {
+    return apiRequest('/auth/login', 'POST', { email, password });
+  },
+  
+  signup: (name: string, email: string, password: string) => {
+    return apiRequest('/auth/signup', 'POST', { name, email, password });
+  },
+  
+  logout: () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+  },
+  
+  getCurrentUser: () => {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+};
+
+// API services for campaigns
+export const campaignService = {
+  list: () => apiRequest('/campaigns'),
+  
+  getById: (id: string) => apiRequest(`/campaigns/${id}`),
+  
+  create: (campaign: {
+    name: string;
+    subject: string;
+    content: string;
+    sendAt?: string;
+    templateId?: string;
+  }) => apiRequest('/campaigns', 'POST', campaign),
+  
+  update: (id: string, campaign: {
+    name?: string;
+    subject?: string;
+    content?: string;
+    sendAt?: string;
+    templateId?: string;
+    status?: string;
+  }) => apiRequest(`/campaigns/${id}`, 'PUT', campaign),
+  
+  delete: (id: string) => apiRequest(`/campaigns/${id}`, 'DELETE'),
+  
+  send: (id: string) => apiRequest(`/campaigns/${id}/send`, 'POST')
+};
+
+// API services for subscribers
+export const subscriberService = {
+  list: () => apiRequest('/subscribers'),
+  
+  getById: (id: string) => apiRequest(`/subscribers/${id}`),
+  
+  create: (subscriber: {
+    email: string;
+    name?: string;
+    status?: string;
+    metadata?: Record<string, any>;
+  }) => apiRequest('/subscribers', 'POST', subscriber),
+  
+  update: (id: string, subscriber: {
+    email?: string;
+    name?: string;
+    status?: string;
+    metadata?: Record<string, any>;
+  }) => apiRequest(`/subscribers/${id}`, 'PUT', subscriber),
+  
+  delete: (id: string) => apiRequest(`/subscribers/${id}`, 'DELETE'),
+  
+  import: (fileData: string) => apiRequest('/subscribers/import', 'POST', { data: fileData })
+};
+
+// API services for templates
+export const templateService = {
+  list: () => apiRequest('/templates'),
+  
+  getById: (id: string) => apiRequest(`/templates/${id}`),
+  
+  create: (template: {
+    name: string;
+    content: string;
+  }) => apiRequest('/templates', 'POST', template),
+  
+  update: (id: string, template: {
+    name?: string;
+    content?: string;
+  }) => apiRequest(`/templates/${id}`, 'PUT', template),
+  
+  delete: (id: string) => apiRequest(`/templates/${id}`, 'DELETE')
+};
+
+// API services for analytics
+export const analyticsService = {
+  getStats: () => apiRequest('/analytics/stats'),
+  
+  getEvents: (filters?: {
+    startDate?: string;
+    endDate?: string;
+    campaignId?: string;
+    eventType?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, value);
+      });
+    }
+    
+    const queryString = queryParams.toString();
+    return apiRequest(`/analytics/events${queryString ? `?${queryString}` : ''}`);
+  }
+};
+
+// API services for activity logs
+export const activityService = {
+  getRecent: (limit = 10) => apiRequest(`/activity?limit=${limit}`)
 };
