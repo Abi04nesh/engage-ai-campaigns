@@ -1,6 +1,7 @@
 
 import { toast } from "@/hooks/use-toast";
 import { SendEmailRequest, SendEmailResponse } from "@/types/api";
+import { supabase } from "@/integrations/supabase/client";
 
 // Base API URL - should be configurable via environment variable in production
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
@@ -75,19 +76,83 @@ export const sendEmailWithNotification = async (options: SendEmailRequest): Prom
   return success;
 };
 
-// API services for authentication
+// Auth service for Supabase authentication
 export const authService = {
-  login: (email: string, password: string) => {
-    return apiRequest('/auth/login', 'POST', { email, password });
+  login: async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        const user = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: data.user.user_metadata.name || '',
+          createdAt: new Date(data.user.created_at || '').toISOString()
+        };
+        
+        return {
+          success: true,
+          message: 'Login successful',
+          user,
+          token: data.session?.access_token
+        };
+      }
+      
+      return { success: false, message: 'Login failed' };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Login failed' };
+    }
   },
   
-  signup: (name: string, email: string, password: string) => {
-    return apiRequest('/auth/signup', 'POST', { name, email, password });
+  signup: async (name: string, email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name }
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        const user = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: name,
+          createdAt: new Date(data.user.created_at || '').toISOString()
+        };
+        
+        return {
+          success: true,
+          message: 'Account created successfully',
+          user,
+          token: data.session?.access_token
+        };
+      }
+      
+      return { success: false, message: 'Signup failed' };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Signup failed' };
+    }
   },
   
-  logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+  logout: async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
+      return false;
+    }
   },
   
   getCurrentUser: () => {

@@ -1,8 +1,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { authService } from '@/utils/emailService';
-import { AuthUser, AuthResponse } from '@/types/api';
 import { useToast } from '@/components/ui/use-toast';
+import { AuthUser } from '@/types/api';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -10,15 +11,50 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load user from localStorage on initial render
+  // Load session from Supabase on initial render
   useEffect(() => {
-    const loadUser = () => {
-      const storedUser = authService.getCurrentUser();
-      setUser(storedUser);
+    const loadSession = async () => {
+      setIsLoading(true);
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata.name || '',
+          createdAt: new Date(session.user.created_at || '').toISOString()
+        };
+        setUser(authUser);
+      }
+      
       setIsLoading(false);
     };
     
-    loadUser();
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          const authUser: AuthUser = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata.name || '',
+            createdAt: new Date(session.user.created_at || '').toISOString()
+          };
+          setUser(authUser);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+    
+    loadSession();
+    
+    // Clean up subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -26,22 +62,33 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      const response = await authService.login(email, password);
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (response.success && response.user && response.token) {
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
+      if (authError) throw authError;
+      
+      if (data.user) {
+        const authUser: AuthUser = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: data.user.user_metadata.name || '',
+          createdAt: new Date(data.user.created_at || '').toISOString()
+        };
+        
+        setUser(authUser);
+        
         toast({
           title: "Login Successful",
-          description: `Welcome back, ${response.user.name}!`,
+          description: `Welcome back, ${authUser.name || authUser.email}!`,
         });
         return true;
-      } else {
-        throw new Error(response.message || 'Login failed');
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      
+      return false;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Login failed';
       setError(errorMessage);
       toast({
         title: "Login Failed",
@@ -59,22 +106,36 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      const response = await authService.signup(name, email, password);
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name }
+        }
+      });
       
-      if (response.success && response.user && response.token) {
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
+      if (authError) throw authError;
+      
+      if (data.user) {
+        const authUser: AuthUser = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: name,
+          createdAt: new Date(data.user.created_at || '').toISOString()
+        };
+        
+        setUser(authUser);
+        
         toast({
           title: "Account Created",
           description: "Your account has been created successfully.",
         });
         return true;
-      } else {
-        throw new Error(response.message || 'Signup failed');
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Signup failed';
+      
+      return false;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Signup failed';
       setError(errorMessage);
       toast({
         title: "Signup Failed",
@@ -87,8 +148,8 @@ export const useAuth = () => {
     }
   }, [toast]);
 
-  const logout = useCallback(() => {
-    authService.logout();
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
     toast({
       title: "Logged Out",
