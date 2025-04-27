@@ -13,9 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useAuthContext } from "@/App";
 import { Helmet } from "react-helmet-async";
+import { motion } from "framer-motion";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -55,14 +56,24 @@ export default function Login() {
       <Helmet>
         <title>Login | EngageAI</title>
       </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="mx-auto max-w-sm">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen flex items-center justify-center bg-background px-4"
+      >
+        <Card className="mx-auto max-w-sm w-full">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-2">
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="flex justify-center mb-2"
+            >
               <div className="rounded-full bg-brand-100 p-3">
                 <Mail className="h-6 w-6 text-brand-700" />
               </div>
-            </div>
+            </motion.div>
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
             <CardDescription>
               Sign in to your account to continue
@@ -70,29 +81,41 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             {needsVerification && (
-              <Alert className="mb-4 bg-amber-50 border-amber-200">
-                <AlertDescription className="text-amber-800">
-                  <div className="flex flex-col gap-2">
-                    <p>Your email is not yet verified. Please check your inbox for the verification email.</p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-2 border-amber-300 text-amber-800 hover:bg-amber-100"
-                      onClick={handleResendVerification}
-                      disabled={isLoading}
-                    >
-                      Resend Verification Email
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Alert className="mb-4 bg-amber-50 border-amber-200">
+                  <AlertDescription className="text-amber-800">
+                    <div className="flex flex-col gap-2">
+                      <p>Your email is not yet verified. Please check your inbox for the verification email.</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-2 border-amber-300 text-amber-800 hover:bg-amber-100"
+                        onClick={handleResendVerification}
+                        disabled={isLoading}
+                      >
+                        Resend Verification Email
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
             )}
             
             {errorMessage && (
-              <Alert className="mb-4 bg-red-50 border-red-200">
-                <AlertDescription className="text-red-800">
-                  {errorMessage}
-                </AlertDescription>
-              </Alert>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Alert className="mb-4 bg-red-50 border-red-200">
+                  <AlertDescription className="text-red-800">
+                    {errorMessage}
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
             )}
             
             <form onSubmit={handleSubmit}>
@@ -102,10 +125,10 @@ export default function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@example.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -113,7 +136,7 @@ export default function Login() {
                     <Label htmlFor="password">Password</Label>
                     <Link
                       to="/reset-password"
-                      className="text-sm text-brand-500 hover:text-brand-700"
+                      className="text-sm text-brand-500 hover:text-brand-700 transition-colors"
                     >
                       Forgot password?
                     </Link>
@@ -121,15 +144,15 @@ export default function Login() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-brand-600 hover:bg-brand-700 transition-colors"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing In..." : "Sign In"}
@@ -138,18 +161,23 @@ export default function Login() {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              className="text-center text-sm"
+            >
               Don't have an account?{" "}
               <Link
                 to="/signup"
-                className="text-brand-500 hover:text-brand-700 font-medium"
+                className="text-brand-500 hover:text-brand-700 font-medium transition-colors"
               >
                 Create an account
               </Link>
-            </div>
+            </motion.div>
           </CardFooter>
         </Card>
-      </div>
+      </motion.div>
     </>
   );
 }

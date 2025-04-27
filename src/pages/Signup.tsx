@@ -16,6 +16,7 @@ import { Mail } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuthContext } from "@/App";
 import { Helmet } from "react-helmet-async";
+import { motion } from "framer-motion";
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -52,30 +53,45 @@ export default function Signup() {
       <Helmet>
         <title>Sign Up | EngageAI</title>
       </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen flex items-center justify-center bg-background px-4"
+      >
         <Card className="mx-auto max-w-md w-full">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-2">
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="flex justify-center mb-2"
+            >
               <div className="rounded-full bg-brand-100 p-3">
                 <Mail className="h-6 w-6 text-brand-700" />
               </div>
-            </div>
+            </motion.div>
             <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
             <CardDescription>
               Enter your information to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit}>
+            <motion.form 
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    placeholder="John Doe"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -83,10 +99,10 @@ export default function Signup() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@example.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -94,10 +110,10 @@ export default function Signup() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -105,16 +121,27 @@ export default function Signup() {
                   <Input
                     id="confirm-password"
                     type="password"
-                    placeholder="••••••••"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="transition-all duration-200 focus:ring-brand-500"
                   />
                   {passwordError && (
-                    <p className="text-sm text-red-500">{passwordError}</p>
+                    <motion.p 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-red-500"
+                    >
+                      {passwordError}
+                    </motion.p>
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <motion.div 
+                  className="flex items-center space-x-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
                   <Checkbox
                     id="terms"
                     checked={acceptTerms}
@@ -133,26 +160,35 @@ export default function Signup() {
                       privacy policy
                     </Link>
                   </Label>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                </motion.div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-brand-600 hover:bg-brand-700 transition-colors" 
+                  disabled={isLoading}
+                >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
               </div>
-            </form>
+            </motion.form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-center text-sm">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
+              className="text-center text-sm"
+            >
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-brand-500 hover:text-brand-700 font-medium"
+                className="text-brand-500 hover:text-brand-700 font-medium transition-colors"
               >
                 Sign in
               </Link>
-            </div>
+            </motion.div>
           </CardFooter>
         </Card>
-      </div>
+      </motion.div>
     </>
   );
 }
