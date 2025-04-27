@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Send, AlertCircle } from "lucide-react";
+import { Send, AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TestEmailSender() {
@@ -63,6 +63,7 @@ export function TestEmailSender() {
         
         {debugInfo && (
           <Alert>
+            <Info className="h-4 w-4" />
             <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
               {debugInfo}
             </AlertDescription>
@@ -105,6 +106,7 @@ export function TestEmailSender() {
         <Button 
           onClick={handleSendTestEmail} 
           disabled={isSending || !recipient || !subject || !content}
+          className="w-full md:w-auto"
         >
           {isSending ? "Sending..." : (
             <>
@@ -121,6 +123,8 @@ export function TestEmailSender() {
               <li>Make sure your Resend API key is correctly set in Supabase</li>
               <li>Verify that your Resend account is active</li>
               <li>Check if the email domain is verified in Resend</li>
+              <li>Check if emails are being delivered to your spam folder</li>
+              <li>If using a free Resend account, verify you're sending from an allowed domain</li>
             </ul>
           </AlertDescription>
         </Alert>

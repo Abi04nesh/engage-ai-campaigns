@@ -36,14 +36,17 @@ serve(async (req) => {
     console.log("Subject:", subject);
     console.log("API Key status:", RESEND_API_KEY ? "Present (length: " + RESEND_API_KEY.length + ")" : "Missing");
     
+    // Ensure 'to' is always an array
+    const recipients = Array.isArray(to) ? to : [to];
+    
     const emailResponse = await resend.emails.send({
       from: "EngageAI <onboarding@resend.dev>",
-      to: Array.isArray(to) ? to : [to],
+      to: recipients,
       subject,
       html,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email sent response:", emailResponse);
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,
@@ -52,7 +55,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in send-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message, 
+        details: typeof error === 'object' ? JSON.stringify(error) : 'No additional details'
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
