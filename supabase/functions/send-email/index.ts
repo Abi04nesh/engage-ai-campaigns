@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { S3, SES } from "https://deno.land/x/aws_sdk@v3.32.0-1/client-sdk/ses/mod.ts";
+import { SESClient, SendEmailCommand } from "npm:@aws-sdk/client-ses";
 
 // Make sure to use the API keys from environment variables
 const AWS_ACCESS_KEY_ID = Deno.env.get("AWS_ACCESS_KEY_ID");
@@ -14,7 +14,7 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
 console.log("Initializing AWS SES with credentials status:", AWS_ACCESS_KEY_ID ? "Present" : "Missing");
 
 // Initialize AWS SES client
-const ses = new SES({
+const sesClient = new SESClient({
   region: AWS_REGION,
   credentials: {
     accessKeyId: AWS_ACCESS_KEY_ID || "",
@@ -70,7 +70,8 @@ serve(async (req) => {
     };
 
     // Send the email using AWS SES
-    const emailResponse = await ses.sendEmail(params);
+    const command = new SendEmailCommand(params);
+    const emailResponse = await sesClient.send(command);
     
     console.log("Email sent response:", emailResponse);
 
@@ -85,6 +86,7 @@ serve(async (req) => {
     let errorMessage = error.message || "Unknown error";
     let errorDetails = "No additional details";
     let statusCode = 500;
+    let errorName = error.name || "Error";
     
     if (error.name === "InvalidParameterValue") {
       statusCode = 400;
@@ -100,7 +102,7 @@ serve(async (req) => {
       JSON.stringify({ 
         error: errorMessage, 
         details: errorDetails,
-        name: error.name || "Error"
+        name: errorName
       }),
       {
         status: statusCode,
