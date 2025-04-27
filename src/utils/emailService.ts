@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 import { SendEmailRequest, SendEmailResponse } from "@/types/api";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,8 +44,32 @@ async function apiRequest<T>(
 // Send email using our API
 export const sendEmail = async (options: SendEmailRequest): Promise<SendEmailResponse> => {
   try {
-    const response = await apiRequest<SendEmailResponse>('/email/send', 'POST', options);
-    return response;
+    // We now use the Supabase edge function instead of direct API call
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: options
+    });
+    
+    if (error) {
+      console.error('Email sending error (Supabase function):', error);
+      return { 
+        success: false, 
+        message: error.message || 'Unknown error occurred while sending email' 
+      };
+    }
+    
+    // Handle AWS SES specific errors
+    if (data?.error) {
+      return {
+        success: false,
+        message: data.error.message || 'AWS SES error occurred'
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: 'Email sent successfully',
+      messageId: data?.MessageId
+    };
   } catch (error) {
     console.error('Email sending error:', error);
     return { 

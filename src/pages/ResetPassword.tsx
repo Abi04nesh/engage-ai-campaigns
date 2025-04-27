@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ export default function ResetPassword() {
     setIsLoading(true);
     
     try {
+      // This part remains the same since it uses Supabase's built-in functionality
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/update-password',
       });

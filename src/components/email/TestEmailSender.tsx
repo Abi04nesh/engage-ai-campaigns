@@ -38,13 +38,13 @@ export function TestEmailSender() {
 
       if (result.success) {
         setDebugInfo(`Email request processed. Response: ${JSON.stringify(result.data, null, 2)}`);
-        setSuccessInfo("Email request processed successfully. Note that with Resend free tier, emails might be delayed or filtered if you're not using a verified domain.");
+        setSuccessInfo("Email request processed successfully. Check your inbox for the email.");
       } else {
-        // Check for API key validation error
-        if (result.error?.message?.includes("API key is invalid") || 
-            (result.error?.data?.error?.name === "validation_error" && 
-             result.error?.data?.error?.message?.includes("API key is invalid"))) {
-          setErrorInfo(`API key validation error: The Resend API key appears to be invalid. Please check that you've set the correct API key in Supabase Edge Function Secrets.`);
+        // Check for AWS credentials error
+        if (result.error?.message?.includes("credentials")) {
+          setErrorInfo(`AWS credentials error: Please check that you've set the correct AWS access keys in Supabase Edge Function Secrets.`);
+        } else if (result.error?.name === "MessageRejected") {
+          setErrorInfo(`Email rejected: ${result.error.message}. Make sure your sender email is verified in AWS SES.`);
         } else {
           setErrorInfo(`Failed to send email: ${JSON.stringify(result.error, null, 2)}`);
         }
@@ -89,16 +89,17 @@ export function TestEmailSender() {
           </Alert>
         )}
         
-        {lastResponse?.data?.error?.name === "validation_error" && (
+        {lastResponse?.data?.error?.name === "CredentialsError" && (
           <Alert className="bg-yellow-50 border-yellow-200">
             <Key className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs text-yellow-700">
-              <strong>API Key Validation Error</strong>
-              <p className="mt-1">The Resend API key appears to be invalid. Please make sure you have:</p>
+              <strong>AWS Credentials Error</strong>
+              <p className="mt-1">AWS access keys appear to be invalid or missing. Please make sure you have:</p>
               <ul className="list-disc pl-4 mt-1">
-                <li>Added the correct API key to Supabase Edge Function Secrets</li>
-                <li>Properly set up your Resend account</li>
-                <li>The API key has not been revoked or expired</li>
+                <li>Added the AWS_ACCESS_KEY_ID to Supabase Edge Function Secrets</li>
+                <li>Added the AWS_SECRET_ACCESS_KEY to Supabase Edge Function Secrets</li>
+                <li>Verified the sender email address in AWS SES</li>
+                <li>Properly set up your AWS SES account</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -109,7 +110,7 @@ export function TestEmailSender() {
             <Info className="h-4 w-4 text-blue-500" />
             <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
               <strong>Last API Response:</strong>
-              <pre className="mt-2 bg-blue-100 p-2 rounded">
+              <pre className="mt-2 bg-blue-100 p-2 rounded overflow-auto max-h-40">
                 {JSON.stringify(lastResponse, null, 2)}
               </pre>
             </AlertDescription>
@@ -164,12 +165,12 @@ export function TestEmailSender() {
         
         <Alert className="w-full">
           <AlertDescription className="text-xs">
-            <p>For troubleshooting API key validation errors:</p>
+            <p>For troubleshooting AWS SES email sending:</p>
             <ul className="list-disc pl-4 mt-1">
-              <li>Make sure your Resend API key is correctly set in Supabase Edge Function Secrets</li>
-              <li>With Resend free tier, you must use <code>onboarding@resend.dev</code> as the sender</li>
-              <li>Check if your Resend account is active and not suspended</li>
-              <li>Try regenerating a new API key in your Resend dashboard</li>
+              <li>Make sure your AWS access keys are correctly set in Supabase Edge Function Secrets</li>
+              <li>Verify that the sender email address is verified in AWS SES</li>
+              <li>If you're in the AWS SES sandbox, recipient emails must also be verified</li>
+              <li>Check if your AWS SES account is active and has sending permissions</li>
               <li>Check the Supabase edge function logs for detailed error messages</li>
             </ul>
           </AlertDescription>

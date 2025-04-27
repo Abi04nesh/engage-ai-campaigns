@@ -31,11 +31,17 @@ export function useEmailSender() {
         throw error;
       }
 
-      // Check for API key validation error in the response data
-      if (data?.error?.name === "validation_error" && data?.error?.message?.includes("API key is invalid")) {
-        const apiKeyError = new Error("The Resend API key is invalid. Please check your API key in Supabase Edge Function Secrets.");
-        console.error("Resend API key validation error:", data.error);
-        throw apiKeyError;
+      // Check for AWS SES specific errors
+      if (data?.error) {
+        console.error("AWS SES error:", data.error);
+        
+        if (data.error.name === "CredentialsError") {
+          throw new Error("AWS credentials are invalid or missing. Please check your AWS access keys in Supabase Edge Function Secrets.");
+        } else if (data.error.name === "MessageRejected") {
+          throw new Error("Email rejected: " + data.error);
+        } else {
+          throw new Error(data.error);
+        }
       }
 
       console.log("Email sent response:", data);
@@ -55,11 +61,6 @@ export function useEmailSender() {
         errorMessage = error.message;
       } else if (typeof error === 'object' && error !== null) {
         errorMessage = JSON.stringify(error);
-      }
-      
-      // Special handling for API key validation errors
-      if (errorMessage.includes("API key is invalid")) {
-        errorMessage = "The Resend API key is invalid. Please make sure you have added the correct API key to Supabase Edge Function Secrets.";
       }
       
       toast({
