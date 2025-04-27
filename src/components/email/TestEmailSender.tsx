@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Send, AlertCircle, Info, CheckCircle } from "lucide-react";
+import { Send, AlertCircle, Info, CheckCircle, Key } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TestEmailSender() {
@@ -40,7 +40,14 @@ export function TestEmailSender() {
         setDebugInfo(`Email request processed. Response: ${JSON.stringify(result.data, null, 2)}`);
         setSuccessInfo("Email request processed successfully. Note that with Resend free tier, emails might be delayed or filtered if you're not using a verified domain.");
       } else {
-        setErrorInfo(`Failed to send email: ${JSON.stringify(result.error, null, 2)}`);
+        // Check for API key validation error
+        if (result.error?.message?.includes("API key is invalid") || 
+            (result.error?.data?.error?.name === "validation_error" && 
+             result.error?.data?.error?.message?.includes("API key is invalid"))) {
+          setErrorInfo(`API key validation error: The Resend API key appears to be invalid. Please check that you've set the correct API key in Supabase Edge Function Secrets.`);
+        } else {
+          setErrorInfo(`Failed to send email: ${JSON.stringify(result.error, null, 2)}`);
+        }
       }
     } catch (error) {
       setErrorInfo(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
@@ -78,6 +85,21 @@ export function TestEmailSender() {
             <Info className="h-4 w-4" />
             <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
               {debugInfo}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {lastResponse?.data?.error?.name === "validation_error" && (
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <Key className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs text-yellow-700">
+              <strong>API Key Validation Error</strong>
+              <p className="mt-1">The Resend API key appears to be invalid. Please make sure you have:</p>
+              <ul className="list-disc pl-4 mt-1">
+                <li>Added the correct API key to Supabase Edge Function Secrets</li>
+                <li>Properly set up your Resend account</li>
+                <li>The API key has not been revoked or expired</li>
+              </ul>
             </AlertDescription>
           </Alert>
         )}
@@ -142,13 +164,13 @@ export function TestEmailSender() {
         
         <Alert className="w-full">
           <AlertDescription className="text-xs">
-            <p>For troubleshooting:</p>
+            <p>For troubleshooting API key validation errors:</p>
             <ul className="list-disc pl-4 mt-1">
-              <li>Make sure your Resend API key is correctly set in Supabase</li>
+              <li>Make sure your Resend API key is correctly set in Supabase Edge Function Secrets</li>
               <li>With Resend free tier, you must use <code>onboarding@resend.dev</code> as the sender</li>
-              <li>Check if emails are being delivered to your spam folder</li>
+              <li>Check if your Resend account is active and not suspended</li>
+              <li>Try regenerating a new API key in your Resend dashboard</li>
               <li>Check the Supabase edge function logs for detailed error messages</li>
-              <li>Resend has delivery limits on free accounts - check the quota on your dashboard</li>
             </ul>
           </AlertDescription>
         </Alert>

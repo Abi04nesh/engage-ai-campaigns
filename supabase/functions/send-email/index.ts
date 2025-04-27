@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Resend } from "npm:resend@2.0.0";
 
 // Make sure to use the API key from environment variable
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "re_JYqGssn9_MAEN7kuT66CAvAjeWKBDV54z";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 if (!RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not set in environment variables");
