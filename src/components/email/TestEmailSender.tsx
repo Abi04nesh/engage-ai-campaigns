@@ -5,33 +5,68 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Send, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TestEmailSender() {
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("<p>This is a test email sent from EngageAI.</p>");
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<string | null>(null);
   const { sendEmail, isSending } = useEmailSender();
 
   const handleSendTestEmail = async () => {
     if (!recipient || !subject || !content) {
+      setErrorInfo("All fields must be filled out");
       return;
     }
 
-    await sendEmail({
-      to: recipient,
-      subject,
-      html: content
-    });
+    setDebugInfo("Sending email...");
+    setErrorInfo(null);
+
+    try {
+      const result = await sendEmail({
+        to: recipient,
+        subject,
+        html: content
+      });
+
+      if (result.success) {
+        setDebugInfo(`Email sent successfully: ${JSON.stringify(result.data, null, 2)}`);
+      } else {
+        setErrorInfo(`Failed to send email: ${JSON.stringify(result.error, null, 2)}`);
+      }
+    } catch (error) {
+      setErrorInfo(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle>Send Test Email</CardTitle>
+        <CardDescription>Test your email configuration by sending a test message</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {errorInfo && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
+              {errorInfo}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {debugInfo && (
+          <Alert>
+            <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
+              {debugInfo}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-2">
           <Label htmlFor="recipient">Recipient Email</Label>
           <Input

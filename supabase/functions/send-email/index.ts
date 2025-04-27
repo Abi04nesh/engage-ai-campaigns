@@ -2,7 +2,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Make sure to use the API key from environment variable
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+if (!RESEND_API_KEY) {
+  console.error("RESEND_API_KEY is not set in environment variables");
+}
+
+const resend = new Resend(RESEND_API_KEY);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,7 +30,10 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, or html");
     }
 
+    // Log the API key status (without exposing the actual key)
+    console.log("API Key status:", RESEND_API_KEY ? "Present" : "Missing");
     console.log("Sending email to:", to);
+    
     const emailResponse = await resend.emails.send({
       from: "EngageAI <onboarding@resend.dev>",
       to: Array.isArray(to) ? to : [to],

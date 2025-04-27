@@ -17,12 +17,18 @@ export function useEmailSender() {
     setIsSending(true);
 
     try {
+      console.log("Sending email to:", to);
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: { to, subject, html }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
 
+      console.log("Email sent response:", data);
+      
       toast({
         title: "Email sent successfully",
         description: "Your email has been sent.",
@@ -31,9 +37,18 @@ export function useEmailSender() {
       return { success: true, data };
     } catch (error) {
       console.error("Error sending email:", error);
+      
+      // More detailed error message
+      let errorMessage = "An unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error);
+      }
+      
       toast({
         title: "Failed to send email",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
 
