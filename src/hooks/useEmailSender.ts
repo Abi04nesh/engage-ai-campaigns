@@ -1,82 +1,50 @@
 
 import { useState } from "react";
-import { sendEmail, sendEmailWithNotification } from "@/utils/emailService";
-import { SendEmailRequest, SendEmailResponse } from "@/types/api";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
-export const useEmailSender = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+interface SendEmailParams {
+  to: string | string[];
+  subject: string;
+  html: string;
+}
+
+export function useEmailSender() {
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
-  
-  const sendEmailAsync = async (
-    to: string | string[],
-    subject: string,
-    html: string,
-    from?: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    
+
+  const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
+    setIsSending(true);
+
     try {
-      const request: SendEmailRequest = { to, subject, html, from };
-      const result = await sendEmail(request);
-      
-      if (!result.success) {
-        setError(result.message);
-      }
-      
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      
-      return {
-        success: false,
-        message: errorMessage
-      } as SendEmailResponse;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const sendEmailWithNotificationAsync = async (
-    to: string | string[],
-    subject: string,
-    html: string,
-    from?: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const success = await sendEmailWithNotification({ to, subject, html, from });
-      
-      if (!success) {
-        setError('Failed to send email');
-      }
-      
-      return success;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: { to, subject, html }
+      });
+
+      if (error) throw error;
+
       toast({
-        title: "Email Failed",
-        description: errorMessage,
+        title: "Email sent successfully",
+        description: "Your email has been sent.",
+      });
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Failed to send email",
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
-      
-      return false;
+
+      return { success: false, error };
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
-  
+
   return {
-    sendEmail: sendEmailAsync,
-    sendEmailWithNotification: sendEmailWithNotificationAsync,
-    isLoading,
-    error,
+    sendEmail,
+    isSending
   };
-};
+}

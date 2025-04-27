@@ -12,14 +12,18 @@ export function TestEmailSender() {
   const [recipient, setRecipient] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("<p>This is a test email sent from EngageAI.</p>");
-  const { sendEmailWithNotification, isLoading, error } = useEmailSender();
+  const { sendEmail, isSending } = useEmailSender();
 
   const handleSendTestEmail = async () => {
     if (!recipient || !subject || !content) {
       return;
     }
 
-    await sendEmailWithNotification(recipient, subject, content);
+    await sendEmail({
+      to: recipient,
+      subject,
+      html: content
+    });
   };
 
   return (
@@ -59,17 +63,13 @@ export function TestEmailSender() {
             onChange={(e) => setContent(e.target.value)}
           />
         </div>
-        
-        {error && (
-          <div className="text-sm text-red-500">{error}</div>
-        )}
       </CardContent>
       <CardFooter>
         <Button 
           onClick={handleSendTestEmail} 
-          disabled={isLoading || !recipient || !subject || !content}
+          disabled={isSending || !recipient || !subject || !content}
         >
-          {isLoading ? "Sending..." : (
+          {isSending ? "Sending..." : (
             <>
               <Send className="w-4 h-4 mr-2" />
               Send Test Email
