@@ -18,6 +18,8 @@ export function useEmailSender() {
 
     try {
       console.log("Sending email to:", to);
+      console.log("Using Supabase URL:", supabase.functions.url);
+      
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: { to, subject, html }
       });

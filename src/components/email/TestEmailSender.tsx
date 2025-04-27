@@ -23,10 +23,11 @@ export function TestEmailSender() {
       return;
     }
 
-    setDebugInfo("Sending email...");
+    setDebugInfo("Starting email send process...");
     setErrorInfo(null);
 
     try {
+      setDebugInfo("Calling sendEmail function...");
       const result = await sendEmail({
         to: recipient,
         subject,
@@ -40,6 +41,7 @@ export function TestEmailSender() {
       }
     } catch (error) {
       setErrorInfo(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Test email sender error:", error);
     }
   };
 
@@ -99,7 +101,7 @@ export function TestEmailSender() {
           />
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col items-start space-y-4">
         <Button 
           onClick={handleSendTestEmail} 
           disabled={isSending || !recipient || !subject || !content}
@@ -111,6 +113,17 @@ export function TestEmailSender() {
             </>
           )}
         </Button>
+        
+        <Alert className="w-full">
+          <AlertDescription className="text-xs">
+            <p>For troubleshooting:</p>
+            <ul className="list-disc pl-4 mt-1">
+              <li>Make sure your Resend API key is correctly set in Supabase</li>
+              <li>Verify that your Resend account is active</li>
+              <li>Check if the email domain is verified in Resend</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       </CardFooter>
     </Card>
   );
