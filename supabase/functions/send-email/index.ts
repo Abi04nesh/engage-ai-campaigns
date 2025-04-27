@@ -39,8 +39,9 @@ serve(async (req) => {
     // Ensure 'to' is always an array
     const recipients = Array.isArray(to) ? to : [to];
     
+    // IMPORTANT: When using the free tier, you must use onboarding@resend.dev as the from address
     const emailResponse = await resend.emails.send({
-      from: "EngageAI <onboarding@resend.dev>",
+      from: "Lovable <onboarding@resend.dev>", // Using Resend's shared domain
       to: recipients,
       subject,
       html,

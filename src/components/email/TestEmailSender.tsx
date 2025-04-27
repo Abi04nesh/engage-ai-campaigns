@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Send, AlertCircle, Info } from "lucide-react";
+import { Send, AlertCircle, Info, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function TestEmailSender() {
@@ -15,7 +15,8 @@ export function TestEmailSender() {
   const [content, setContent] = useState("<p>This is a test email sent from EngageAI.</p>");
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [errorInfo, setErrorInfo] = useState<string | null>(null);
-  const { sendEmail, isSending } = useEmailSender();
+  const [successInfo, setSuccessInfo] = useState<string | null>(null);
+  const { sendEmail, isSending, lastResponse } = useEmailSender();
 
   const handleSendTestEmail = async () => {
     if (!recipient || !subject || !content) {
@@ -25,6 +26,7 @@ export function TestEmailSender() {
 
     setDebugInfo("Starting email send process...");
     setErrorInfo(null);
+    setSuccessInfo(null);
 
     try {
       setDebugInfo("Calling sendEmail function...");
@@ -35,7 +37,8 @@ export function TestEmailSender() {
       });
 
       if (result.success) {
-        setDebugInfo(`Email sent successfully: ${JSON.stringify(result.data, null, 2)}`);
+        setDebugInfo(`Email request processed. Response: ${JSON.stringify(result.data, null, 2)}`);
+        setSuccessInfo("Email request processed successfully. Note that with Resend free tier, emails might be delayed or filtered if you're not using a verified domain.");
       } else {
         setErrorInfo(`Failed to send email: ${JSON.stringify(result.error, null, 2)}`);
       }
@@ -61,11 +64,32 @@ export function TestEmailSender() {
           </Alert>
         )}
         
+        {successInfo && (
+          <Alert variant="default" className="bg-green-50 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs text-green-700">
+              {successInfo}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {debugInfo && (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
               {debugInfo}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {lastResponse && (
+          <Alert className="bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="mt-2 whitespace-pre-wrap font-mono text-xs">
+              <strong>Last API Response:</strong>
+              <pre className="mt-2 bg-blue-100 p-2 rounded">
+                {JSON.stringify(lastResponse, null, 2)}
+              </pre>
             </AlertDescription>
           </Alert>
         )}
@@ -121,10 +145,10 @@ export function TestEmailSender() {
             <p>For troubleshooting:</p>
             <ul className="list-disc pl-4 mt-1">
               <li>Make sure your Resend API key is correctly set in Supabase</li>
-              <li>Verify that your Resend account is active</li>
-              <li>Check if the email domain is verified in Resend</li>
+              <li>With Resend free tier, you must use <code>onboarding@resend.dev</code> as the sender</li>
               <li>Check if emails are being delivered to your spam folder</li>
-              <li>If using a free Resend account, verify you're sending from an allowed domain</li>
+              <li>Check the Supabase edge function logs for detailed error messages</li>
+              <li>Resend has delivery limits on free accounts - check the quota on your dashboard</li>
             </ul>
           </AlertDescription>
         </Alert>

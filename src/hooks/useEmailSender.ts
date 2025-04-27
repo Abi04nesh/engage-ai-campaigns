@@ -11,6 +11,7 @@ interface SendEmailParams {
 
 export function useEmailSender() {
   const [isSending, setIsSending] = useState(false);
+  const [lastResponse, setLastResponse] = useState<any>(null);
   const { toast } = useToast();
 
   const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
@@ -23,6 +24,8 @@ export function useEmailSender() {
         body: { to, subject, html }
       });
 
+      setLastResponse({ data, error });
+
       if (error) {
         console.error("Supabase function error:", error);
         throw error;
@@ -31,8 +34,8 @@ export function useEmailSender() {
       console.log("Email sent response:", data);
       
       toast({
-        title: "Email sent successfully",
-        description: "Your email has been sent.",
+        title: "Email request processed",
+        description: "Your email request has been processed. Check the debug info for details.",
       });
 
       return { success: true, data };
@@ -61,6 +64,7 @@ export function useEmailSender() {
 
   return {
     sendEmail,
-    isSending
+    isSending,
+    lastResponse
   };
 }
