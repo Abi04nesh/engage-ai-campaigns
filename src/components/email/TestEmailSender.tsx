@@ -18,6 +18,7 @@ export function TestEmailSender() {
   const [successInfo, setSuccessInfo] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
+  const [fromEmail, setFromEmail] = useState("");
 
   const handleSendTestEmail = async () => {
     if (!recipient || !subject || !content) {
@@ -35,7 +36,8 @@ export function TestEmailSender() {
       const result = await sendEmail({
         to: recipient,
         subject,
-        html: content
+        html: content,
+        from: fromEmail || undefined
       });
 
       setLastResponse(result);
@@ -124,6 +126,18 @@ export function TestEmailSender() {
         )}
         
         <div className="space-y-2">
+          <Label htmlFor="from">From Email (optional)</Label>
+          <Input
+            id="from"
+            type="email"
+            placeholder="your-verified@email.com"
+            value={fromEmail}
+            onChange={(e) => setFromEmail(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">Must be verified in AWS SES</p>
+        </div>
+        
+        <div className="space-y-2">
           <Label htmlFor="recipient">Recipient Email</Label>
           <Input
             id="recipient"
@@ -174,7 +188,7 @@ export function TestEmailSender() {
             <p>For troubleshooting AWS SES email sending:</p>
             <ul className="list-disc pl-4 mt-1">
               <li>Make sure your AWS access keys are correctly set in Supabase Edge Function Secrets</li>
-              <li>Verify that the sender email address is verified in AWS SES</li>
+              <li><strong>Important:</strong> The sender email address MUST be verified in AWS SES</li>
               <li>If you're in the AWS SES sandbox, recipient emails must also be verified</li>
               <li>Check if your AWS SES account is active and has sending permissions</li>
               <li>Check the Supabase edge function logs for detailed error messages</li>

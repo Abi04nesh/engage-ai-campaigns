@@ -8,11 +8,17 @@ export interface SendEmailParams {
   from?: string;
 }
 
+export interface EmailResult {
+  success: boolean;
+  data?: any;
+  error?: any;
+}
+
 /**
  * Sends an email using AWS SES through backend API
  * Uses the AWS credentials stored in Supabase Edge Function Secrets
  */
-export const sendEmail = async ({ to, subject, html, from }: SendEmailParams) => {
+export const sendEmail = async ({ to, subject, html, from }: SendEmailParams): Promise<EmailResult> => {
   try {
     console.log("Sending email to:", to);
     
@@ -28,23 +34,23 @@ export const sendEmail = async ({ to, subject, html, from }: SendEmailParams) =>
 
     if (error) {
       console.error("Error sending email:", error);
-      throw error;
+      return { success: false, error };
     }
 
     console.log("Email sent successfully:", data);
     return { success: true, data };
   } catch (error) {
     console.error("Failed to send email:", error);
-    throw error;
+    return { success: false, error };
   }
 };
 
 // This function is kept for backward compatibility
-export const sendEmailWithNotification = async (params: SendEmailParams) => {
+export const sendEmailWithNotification = async (params: SendEmailParams): Promise<EmailResult> => {
   try {
     const result = await sendEmail(params);
     return result;
   } catch (error) {
-    throw error;
+    return { success: false, error };
   }
 };

@@ -1,9 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@aws-sdk/client-ses@3.369.0';
+import { SESClient, SendEmailCommand } from "npm:@aws-sdk/client-ses";
 
 // Initialize AWS SES client with credentials from environment variables
-const SES = createClient({
+const SES = new SESClient({
   region: Deno.env.get("AWS_REGION") || "us-east-1",
   credentials: {
     accessKeyId: Deno.env.get("AWS_ACCESS_KEY_ID") || "",
@@ -57,7 +57,8 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     // Send email with AWS SES
-    const response = await SES.sendEmail(params);
+    const command = new SendEmailCommand(params);
+    const response = await SES.send(command);
     
     console.log("Email sent successfully:", response);
 
