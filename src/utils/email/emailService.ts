@@ -1,62 +1,53 @@
 
-import { toast } from "@/hooks/use-toast";
-import { SendEmailRequest, SendEmailResponse } from "@/types/api";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Send email using our Supabase edge function
-export const sendEmail = async (options: SendEmailRequest): Promise<SendEmailResponse> => {
+export interface SendEmailParams {
+  to: string | string[];
+  subject: string;
+  html: string;
+}
+
+export const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
   try {
-    // We use the Supabase edge function instead of direct API call
+    console.log("Sending email to:", to);
+    
     const { data, error } = await supabase.functions.invoke('send-email', {
-      body: options
+      body: { to, subject, html }
     });
-    
+
     if (error) {
-      console.error('Email sending error (Supabase function):', error);
-      return { 
-        success: false, 
-        message: error.message || 'Unknown error occurred while sending email' 
-      };
+      console.error("Error sending email:", error);
+      throw error;
     }
-    
-    // Handle AWS SES specific errors
-    if (data?.error) {
-      return {
-        success: false,
-        message: data.error.message || 'AWS SES error occurred'
-      };
-    }
-    
-    return { 
-      success: true, 
-      message: 'Email sent successfully',
-      messageId: data?.MessageId
-    };
+
+    console.log("Email sent successfully:", data);
+    return { success: true, data };
   } catch (error) {
-    console.error('Email sending error:', error);
-    return { 
-      success: false, 
-      message: error instanceof Error ? error.message : 'Unknown error occurred while sending email' 
-    };
+    console.error("Failed to send email:", error);
+    throw error;
   }
 };
 
-// Helper function to display toast notifications for email operations
-export const sendEmailWithNotification = async (options: SendEmailRequest): Promise<boolean> => {
-  const { success, message } = await sendEmail(options);
+export const sendEmailWithNotification = async (params: SendEmailParams) => {
+  const { toast } = useToast();
   
-  if (success) {
+  try {
+    const result = await sendEmail(params);
+    
     toast({
-      title: "Email Sent",
-      description: "Your email has been sent successfully.",
+      title: "Email sent successfully",
+      description: "Your email has been sent.",
     });
-  } else {
+    
+    return result;
+  } catch (error) {
     toast({
-      title: "Email Failed",
-      description: message,
+      title: "Failed to send email",
+      description: error instanceof Error ? error.message : "An unknown error occurred",
       variant: "destructive",
     });
+    
+    throw error;
   }
-  
-  return success;
 };
