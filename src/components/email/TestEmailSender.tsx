@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useEmailSender } from "@/hooks/useEmailSender";
+import { sendEmail } from "@/utils/email/emailService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,8 @@ export function TestEmailSender() {
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [errorInfo, setErrorInfo] = useState<string | null>(null);
   const [successInfo, setSuccessInfo] = useState<string | null>(null);
-  const { sendEmail, isSending, lastResponse } = useEmailSender();
+  const [isSending, setIsSending] = useState(false);
+  const [lastResponse, setLastResponse] = useState<any>(null);
 
   const handleSendTestEmail = async () => {
     if (!recipient || !subject || !content) {
@@ -24,17 +25,21 @@ export function TestEmailSender() {
       return;
     }
 
+    setIsSending(true);
     setDebugInfo("Starting email send process...");
     setErrorInfo(null);
     setSuccessInfo(null);
 
     try {
-      setDebugInfo("Calling sendEmail function...");
+      setDebugInfo("Calling AWS SES email function...");
       const result = await sendEmail({
         to: recipient,
         subject,
         html: content
       });
+
+      setLastResponse(result);
+      setIsSending(false);
 
       if (result.success) {
         setDebugInfo(`Email request processed. Response: ${JSON.stringify(result.data, null, 2)}`);
@@ -50,6 +55,7 @@ export function TestEmailSender() {
         }
       }
     } catch (error) {
+      setIsSending(false);
       setErrorInfo(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
       console.error("Test email sender error:", error);
     }
@@ -59,7 +65,7 @@ export function TestEmailSender() {
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle>Send Test Email</CardTitle>
-        <CardDescription>Test your email configuration by sending a test message</CardDescription>
+        <CardDescription>Test your AWS SES email configuration by sending a test message</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {errorInfo && (
@@ -97,7 +103,7 @@ export function TestEmailSender() {
               <p className="mt-1">AWS access keys appear to be invalid or missing. Please make sure you have:</p>
               <ul className="list-disc pl-4 mt-1">
                 <li>Added the AWS_ACCESS_KEY_ID to Supabase Edge Function Secrets</li>
-                <li>Added the AWS_SECRET_ACCESS_KEY to Supabase Edge Function Secrets</li>
+                <li>Added the AWS_SECRET_KEY_ID to Supabase Edge Function Secrets</li>
                 <li>Verified the sender email address in AWS SES</li>
                 <li>Properly set up your AWS SES account</li>
               </ul>

@@ -1,19 +1,29 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export interface SendEmailParams {
   to: string | string[];
   subject: string;
   html: string;
+  from?: string;
 }
 
-export const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
+/**
+ * Sends an email using AWS SES through backend API
+ * Uses the AWS credentials stored in Supabase Edge Function Secrets
+ */
+export const sendEmail = async ({ to, subject, html, from }: SendEmailParams) => {
   try {
     console.log("Sending email to:", to);
     
-    const { data, error } = await supabase.functions.invoke('send-email', {
-      body: { to, subject, html }
+    // Call our API endpoint that uses AWS SES
+    const { data, error } = await supabase.functions.invoke('aws-ses-email', {
+      body: { 
+        to, 
+        subject, 
+        html,
+        from: from || process.env.DEFAULT_FROM_EMAIL || 'noreply@yourdomain.com'
+      }
     });
 
     if (error) {
@@ -29,25 +39,12 @@ export const sendEmail = async ({ to, subject, html }: SendEmailParams) => {
   }
 };
 
+// This function is kept for backward compatibility
 export const sendEmailWithNotification = async (params: SendEmailParams) => {
-  const { toast } = useToast();
-  
   try {
     const result = await sendEmail(params);
-    
-    toast({
-      title: "Email sent successfully",
-      description: "Your email has been sent.",
-    });
-    
     return result;
   } catch (error) {
-    toast({
-      title: "Failed to send email",
-      description: error instanceof Error ? error.message : "An unknown error occurred",
-      variant: "destructive",
-    });
-    
     throw error;
   }
 };
